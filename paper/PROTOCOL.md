@@ -1,9 +1,9 @@
 # Frozen protocol and publication checklist
 
 ## Conditions
-1. Zero-shot.
-2. One-shot same-language using a permitted development example, never a test example.
-3. One-shot Hindi with a documented exemplar.
+1. Zero-shot (instruction models only; Sarvam-1 is a base model and gets few-shot prompts only).
+2. Three-shot same-language using FLORES dev / XorQA train exemplars, never test items.
+3. Three-shot with Hindi exemplars (same task and direction pattern).
 4. Translate-test as a separate experiment only when the chosen translation system demonstrably supports the language and exact script in both directions. Log translation errors.
 
 ## Sampling

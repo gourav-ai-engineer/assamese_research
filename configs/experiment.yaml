@@ -1,16 +1,20 @@
-protocol_version: "v1-2026-10-10"
-languages:
-  as: {name: Assamese, script: Bengali}
-  mni: {name: Manipuri/Meitei, script: Meitei_Mayek}
-  brx: {name: Bodo, script: Devanagari}
-  hi: {name: Hindi, role: reference}
-tasks: [translation, qa, summarization]
-conditions: [zero_shot, one_shot_same_language, one_shot_hindi]
-decoding: {do_sample: false, max_new_tokens: 256}
-sampling: {flores_sentences_per_direction: 500, qa_items_per_language: 300, seed: 20261010}
-metrics: {translation: [corpus_chrf, sentence_chrf], qa: [mean_token_f1]}
+protocol_version: "v2-2026-10-10"
+languages: [as, mni, brx, hi]          # hi = high-resource reference
+tasks: [translation, qa]               # add summarization (CrossSum-IN) if compute allows
+conditions: [zero_shot, few_shot, few_shot_hindi, translate_test]
+k_shot: 3                              # exemplars from FLORES dev / XorQA train, never test
+translator: indictrans2                # translate-test backend: indictrans2 | nllb (no Bodo)
+batch_size: 8
+max_new_tokens: {translation: 160, qa: 32, summarization: 128}
+sampling:
+  translation: 500                     # sentences per direction (FLORES-IN test has ~1000)
+  qa: 300                              # XorQA-IN test items per language
+  summarization: 200
+  exemplar_pool: 50
+  seed: 20261010
+metrics: {translation: chrf, qa: token_f1, summarization: chrf}
 human_evaluation:
-  outputs_per_language: 100
+  outputs_per_language: 50
   scales: [adequacy_1_to_5, fluency_1_to_5]
-  error_tags: [wrong_language_or_script, missing_information, hallucinated_content, wrong_word_sense, grammar_or_inflection]
-# Targets only: verify dataset coverage before running.
+  error_tags: [wrong_language_or_script, missing_information, hallucinated_content, wrong_word_sense,
+               grammar_or_inflection, untranslated_copy, other]
