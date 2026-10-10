@@ -1,28 +1,18 @@
-"""Prompt templates; version and cite them in every experiment record."""
 PROMPT_VERSION = "2026-10-10-v1"
-
-def build_prompt(row: dict, condition: str = "zero_shot") -> str:
-    task = row["task"]
-    language = row.get("language", "as")
+def build_prompt(row, condition="zero_shot"):
+    task, lang = row["task"], row.get("language", "as")
     if task == "translation":
-        direction = row.get("direction", "en->" + language)
-        src = row.get("source_lang", "en")
-        tgt = row.get("target_lang", language)
-        instruction = f"Translate the following text from {src} to {tgt}. Preserve meaning and do not add explanations."
-        body = row["source"]
+        src, tgt = row.get("source_lang", "en"), row.get("target_lang", lang)
+        instruction, body = f"Translate from {src} to {tgt}. Preserve meaning; add no explanations.", row["source"]
     elif task == "qa":
-        instruction = f"Answer the question using the supplied context. Answer in language code {language}. If the context does not contain the answer, say so."
+        instruction = f"Answer using the context in language code {lang}. Do not invent facts."
         body = f"Context: {row.get('context', row.get('source', ''))}\nQuestion: {row.get('question', '')}"
-    else:
-        instruction = f"Summarize the following text in language code {language}. Do not add facts."
-        body = row["source"]
+    elif task == "summarization":
+        instruction, body = f"Summarize in language code {lang}. Do not add facts.", row["source"]
+    else: raise ValueError(f"Unsupported task: {task}")
     if condition not in {"zero_shot", "one_shot_same_language", "one_shot_hindi"}:
         raise ValueError(f"Unsupported condition: {condition}")
-    # Examples must be supplied explicitly in row['example']; never silently fabricate them.
-    example = row.get("example") if condition != "zero_shot" else None
-    prefix = ""
-    if example:
-        prefix = f"Example input: {example.get('source','')}\nExample output: {example.get('target','')}\n\n"
-    elif condition != "zero_shot":
-        raise ValueError(f"{condition} requires an explicit, verified row['example']")
+    ex = row.get("example") if condition != "zero_shot" else None
+    if condition != "zero_shot" and not ex: raise ValueError(f"{condition} requires a verified row['example']")
+    prefix = f"Example input: {ex.get('source','')}\nExample output: {ex.get('target','')}\n\n" if ex else ""
     return f"{prefix}{instruction}\n\nInput:\n{body}\n\nOutput:"
