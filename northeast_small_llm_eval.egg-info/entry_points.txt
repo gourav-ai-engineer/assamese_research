@@ -1,2 +1,0 @@
-[console_scripts]
-northeast-eval = northeast_eval.cli:app
