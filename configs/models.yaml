@@ -1,9 +1,11 @@
-# Verify model IDs, licenses, revisions and language coverage before use.
+# Pin `revision` to a commit hash before the final runs and report it in the paper.
+# chat: false -> raw-text prompting (base model). family: qwen3 -> thinking mode disabled.
 models:
-  - {id: google/gemma-3-1b-it, family: gemma3, size_b: 1}
-  - {id: google/gemma-3-4b-it, family: gemma3, size_b: 4}
-  - {id: Qwen/Qwen3-1.7B, family: qwen3, size_b: 1.7, notes: "Check documented thinking-disable option"}
-  - {id: Qwen/Qwen3-4B, family: qwen3, size_b: 4, notes: "Check documented thinking-disable option"}
-  - {id: meta-llama/Llama-3.2-1B-Instruct, family: llama32, size_b: 1, notes: "Access terms may apply"}
-  - {id: meta-llama/Llama-3.2-3B-Instruct, family: llama32, size_b: 3, notes: "Access terms may apply"}
-  - {id: sarvamai/sarvam-1, family: sarvam1, size_b: 2, notes: "Base model; do not assume instruction following"}
+  - {id: google/gemma-3-1b-it, family: gemma3, size_b: 1.0}
+  - {id: google/gemma-3-4b-it, family: gemma3, size_b: 4.3}
+  - {id: Qwen/Qwen3-1.7B, family: qwen3, size_b: 1.7}
+  - {id: Qwen/Qwen3-4B, family: qwen3, size_b: 4.0}
+  - {id: meta-llama/Llama-3.2-1B-Instruct, family: llama32, size_b: 1.2}
+  - {id: meta-llama/Llama-3.2-3B-Instruct, family: llama32, size_b: 3.2}
+  # Base model: zero-shot instructions are not meaningful, so only few-shot conditions.
+  - {id: sarvamai/sarvam-1, family: sarvam1, size_b: 2.5, chat: false, conditions: [few_shot, few_shot_hindi]}

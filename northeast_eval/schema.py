@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 REQUIRED = {"id", "task", "language", "source"}
 LANGUAGES = {"as", "mni", "brx", "hi"}
 TASKS = {"translation", "qa", "summarization"}

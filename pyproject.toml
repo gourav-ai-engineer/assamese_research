@@ -4,9 +4,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "northeast-small-llm-eval"
 version = "0.1.0"
-requires-python = ">=3.11,<3.13"
-dependencies = ["typer>=0.12,<1", "rich>=13.7", "sacrebleu>=2.4,<3", "transformers>=4.49", "accelerate>=0.34", "sentencepiece>=0.2", "numpy>=1.26"]
+requires-python = ">=3.10"
+dependencies = ["typer>=0.12,<1", "rich>=13.7", "sacrebleu>=2.4,<3", "numpy>=1.26", "pyyaml>=6", "matplotlib>=3.8"]
 [project.optional-dependencies]
+gpu = ["torch>=2.3", "transformers>=4.51", "accelerate>=0.34", "sentencepiece>=0.2", "protobuf"]
+mt = ["IndicTransToolkit>=1.0"]
+in22 = ["datasets>=2.19"]
 dev = ["pytest>=8", "ruff>=0.6"]
 [project.scripts]
 northeast-eval = "northeast_eval.cli:app"
