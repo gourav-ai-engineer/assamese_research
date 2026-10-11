@@ -6,7 +6,7 @@ transformers = pytest.importorskip("transformers")
 
 from northeast_eval.generation import LLM, run_job  # noqa: E402
 
-CHAT_TEMPLATE = ("{% for m in messages %}<|user|>{{ m['content'] }}{% endfor %}"
+CHAT_TEMPLATE = ("{% for m in messages %}<|{{ m['role'] }}|>{{ m['content'] }}{% endfor %}"
                  "{% if add_generation_prompt %}<|assistant|>{% endif %}")
 
 
@@ -44,3 +44,12 @@ def test_run_job_with_real_model(tiny_model, tmp_path):
                     encoding="utf-8")
     llm = LLM(tiny_model, dtype=torch.float32, is_chat=False)
     assert run_job(llm, data, tmp_path / "out.jsonl", "zero_shot", max_new_tokens=4) == 1
+
+
+def test_chat_few_shot_render(tiny_model):
+    from northeast_eval.prompts import build_messages
+    llm = LLM(tiny_model, dtype=torch.float32)
+    row = {"id": "1", "task": "translation", "language": "as", "source_lang": "en", "target_lang": "as",
+           "source": "Sentence", "reference": "বাক্য"}
+    text = llm.render(build_messages(row, "few_shot", [row]))
+    assert text.count("<|user|>") == 2 and text.endswith("<|assistant|>")

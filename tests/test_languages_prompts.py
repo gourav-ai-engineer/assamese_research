@@ -41,3 +41,12 @@ def test_qa_prompt():
 def test_clean_output():
     assert clean_output("Assamese: শুভ প্ৰভাত।\nEnglish: next", "translation") == "শুভ প্ৰভাত।"
     assert clean_output("<think>\n\n</think>\n\n\"ok\"", "qa") == "ok"
+
+
+def test_chat_few_shot_uses_turns():
+    from northeast_eval.prompts import build_messages
+    msgs = build_messages(ROW, "few_shot_hindi", [HI_EX])
+    assert [m["role"] for m in msgs] == ["user", "assistant", "user"]
+    assert "to Hindi" in msgs[0]["content"] and msgs[1]["content"] == "धन्यवाद।"
+    assert msgs[-1]["content"].endswith("English: Good morning.\nAssamese:")
+    assert len(build_messages(ROW)) == 1

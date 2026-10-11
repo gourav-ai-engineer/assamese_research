@@ -1,13 +1,14 @@
 """Prompt construction.
 
-The same plain-text prompt is used for chat and base models: chat models receive it as a
-single user turn, base models (Sarvam-1) receive it raw and we cut the continuation at the
-first newline. Templates follow the style of IndicGenBench's task instructions; record
+Chat models get few-shot exemplars as alternating user/assistant turns (build_messages);
+a single user turn holding all exemplars made chat models translate an exemplar instead
+of the input. Base models (Sarvam-1) get the plain-text prompt (build_prompt) and we cut
+the continuation at the first newline. Templates follow the style of IndicGenBench's task instructions; record
 PROMPT_VERSION with every prediction so changes are traceable.
 """
 from .languages import lang_name
 
-PROMPT_VERSION = "2026-10-10-v2"
+PROMPT_VERSION = "2026-10-11-v3"
 CONDITIONS = ("zero_shot", "few_shot", "few_shot_hindi", "translate_test")
 
 
@@ -31,35 +32,43 @@ def _summ_parts(row):
     return instruction, lambda r: f"Article: {r['source']}\nSummary in {lang}:", lambda r: f" {r['reference']}"
 
 
-def build_prompt(row, condition="zero_shot", exemplars=None):
-    """Return the prompt text. `exemplars` are rows from the exemplar pool (dev/train split)."""
+def _parts(row):
+    parts = {"translation": _translation_parts, "qa": _qa_parts, "summarization": _summ_parts}
+    if row["task"] not in parts:
+        raise ValueError(f"Unsupported task: {row['task']}")
+    return parts[row["task"]](row)
+
+
+def _check(condition, exemplars):
     if condition not in CONDITIONS:
         raise ValueError(f"Unsupported condition: {condition}")
-    task = row["task"]
-    if task == "translation":
-        instruction, fmt_in, _ = _translation_parts(row)
-    elif task == "qa":
-        instruction, fmt_in, _ = _qa_parts(row)
-    elif task == "summarization":
-        instruction, fmt_in, _ = _summ_parts(row)
-    else:
-        raise ValueError(f"Unsupported task: {task}")
     if condition in ("few_shot", "few_shot_hindi") and not exemplars:
         raise ValueError(f"{condition} requires exemplars from a dev/train split")
-    if condition in ("zero_shot", "translate_test"):
-        exemplars = []
+    return [] if condition in ("zero_shot", "translate_test") else exemplars
+
+
+def build_prompt(row, condition="zero_shot", exemplars=None):
+    """Plain-text prompt (base models). `exemplars` come from the dev/train pool."""
+    exemplars = _check(condition, exemplars)
+    instruction, fmt_in, _ = _parts(row)
+    # Hindi exemplars keep their own language labels so the demonstration is honest.
     shots = []
-    for ex in exemplars or []:
-        # Hindi exemplars keep their own language labels so the demonstration is honest.
-        if ex["task"] == "translation":
-            _, ex_in, ex_out = _translation_parts(ex)
-        elif ex["task"] == "qa":
-            _, ex_in, ex_out = _qa_parts(ex)
-        else:
-            _, ex_in, ex_out = _summ_parts(ex)
+    for ex in exemplars:
+        _, ex_in, ex_out = _parts(ex)
         shots.append(ex_in(ex) + ex_out(ex))
-    blocks = [instruction, *shots, fmt_in(row)]
-    return "\n\n".join(blocks)
+    return "\n\n".join([instruction, *shots, fmt_in(row)])
+
+
+def build_messages(row, condition="zero_shot", exemplars=None):
+    """Chat prompt: each exemplar is a user turn with its own instruction plus an assistant answer."""
+    exemplars = _check(condition, exemplars)
+    messages = []
+    for ex in exemplars:
+        ex_instruction, ex_in, _ = _parts(ex)
+        messages += [{"role": "user", "content": f"{ex_instruction}\n\n{ex_in(ex)}"},
+                     {"role": "assistant", "content": ex["reference"]}]
+    instruction, fmt_in, _ = _parts(row)
+    return [*messages, {"role": "user", "content": f"{instruction}\n\n{fmt_in(row)}"}]
 
 
 def english_qa_row(row, en_question):

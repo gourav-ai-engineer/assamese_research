@@ -4,7 +4,13 @@ import platform
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .prompts import PROMPT_VERSION, build_prompt, clean_output, english_qa_row
+from .prompts import (
+    PROMPT_VERSION,
+    build_messages,
+    build_prompt,
+    clean_output,
+    english_qa_row,
+)
 from .schema import read_jsonl
 
 
@@ -42,7 +48,8 @@ class LLM:
         kwargs = {"tokenize": False, "add_generation_prompt": True}
         if self.family in ("qwen3", "gemma4"):
             kwargs["enable_thinking"] = False  # both chat templates support a non-thinking switch
-        return self.tok.apply_chat_template([{"role": "user", "content": prompt}], **kwargs)
+        messages = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt
+        return self.tok.apply_chat_template(messages, **kwargs)
 
     def generate(self, prompts, max_new_tokens=128, batch_size=8, max_input_tokens=3072):
         rendered = [self.render(p) for p in prompts]
@@ -113,7 +120,8 @@ def run_job(llm, eval_path, output_path, condition, exemplar_path=None, k=3, lim
             e["mt_question"] = q
     else:
         prompt_rows = rows
-    prompts = [build_prompt(r, condition, exemplars) for r in prompt_rows]
+    builder = build_messages if getattr(llm, "is_chat", False) else build_prompt
+    prompts = [builder(r, condition, exemplars) for r in prompt_rows]
     gens = llm.generate(prompts, max_new_tokens=max_new_tokens, batch_size=batch_size)
     preds = [clean_output(g["text"], rows[0]["task"]) for g in gens]
     if condition == "translate_test":
