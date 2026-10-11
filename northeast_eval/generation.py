@@ -40,8 +40,8 @@ class LLM:
         if not self.is_chat:
             return prompt
         kwargs = {"tokenize": False, "add_generation_prompt": True}
-        if self.family == "qwen3":
-            kwargs["enable_thinking"] = False  # documented Qwen3 switch for non-thinking mode
+        if self.family in ("qwen3", "gemma4"):
+            kwargs["enable_thinking"] = False  # both chat templates support a non-thinking switch
         return self.tok.apply_chat_template([{"role": "user", "content": prompt}], **kwargs)
 
     def generate(self, prompts, max_new_tokens=128, batch_size=8, max_input_tokens=3072):

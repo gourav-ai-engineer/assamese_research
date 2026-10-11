@@ -7,7 +7,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["typer>=0.12,<1", "rich>=13.7", "sacrebleu>=2.4,<3", "numpy>=1.26", "pyyaml>=6", "matplotlib>=3.8"]
 [project.optional-dependencies]
-gpu = ["torch>=2.3", "transformers>=4.51", "accelerate>=0.34", "sentencepiece>=0.2", "protobuf"]
+gpu = ["torch>=2.3", "transformers>=5.5", "accelerate>=0.34", "sentencepiece>=0.2", "protobuf"]
 mt = ["IndicTransToolkit>=1.0"]
 in22 = ["datasets>=2.19"]
 dev = ["pytest>=8", "ruff>=0.6"]

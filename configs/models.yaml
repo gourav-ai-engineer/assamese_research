@@ -1,6 +1,9 @@
 # Pin `revision` to a commit hash before the final runs and report it in the paper.
 # chat: false -> raw-text prompting (base model). family: qwen3 -> thinking mode disabled.
 models:
+  # Gemma 4 small models (Apache 2.0). Sizes are effective params; E2B holds ~5B in memory.
+  - {id: google/gemma-4-E2B-it, family: gemma4, size_b: 2.0}
+  - {id: google/gemma-4-E4B-it, family: gemma4, size_b: 4.0}
   - {id: google/gemma-3-1b-it, family: gemma3, size_b: 1.0}
   - {id: google/gemma-3-4b-it, family: gemma3, size_b: 4.3}
   - {id: Qwen/Qwen3-1.7B, family: qwen3, size_b: 1.7}

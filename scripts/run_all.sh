@@ -3,7 +3,7 @@
 set -euo pipefail
 OUT=${OUT:-results}
 northeast-eval prepare
-for m in gemma-3-1b-it gemma-3-4b-it Qwen3-1.7B Qwen3-4B Llama-3.2-1B Llama-3.2-3B sarvam-1; do
+for m in gemma-4-E2B-it gemma-4-E4B-it gemma-3-1b-it gemma-3-4b-it Qwen3-1.7B Qwen3-4B Llama-3.2-1B Llama-3.2-3B sarvam-1; do
   northeast-eval run --model "$m" --out-dir "$OUT/predictions"
 done
 northeast-eval mt-baseline --backend indictrans2 --out-dir "$OUT/predictions"

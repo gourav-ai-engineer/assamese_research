@@ -1,6 +1,6 @@
 # Small Open LLMs on Northeast Indian Languages
 
-Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Languages? An Empirical Study on Assamese, Manipuri and Bodo.** No training, no new dataset. Seven 1–4B open models are run on existing IndicGenBench test sets, with Hindi as a high-resource reference.
+Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Languages? An Empirical Study on Assamese, Manipuri and Bodo.** No training, no new dataset. Nine 1–4B open models are run on existing IndicGenBench test sets, with Hindi as a high-resource reference.
 
 > **Research integrity.** The repository holds the pipeline, not results. Never report smoke-test or placeholder outputs as findings. Pin model revisions before the final runs.
 
@@ -23,7 +23,7 @@ Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Lan
 
 - **Languages:** Assamese (`as`, Bengali script), Manipuri (`mni`; Bengali script in IndicGenBench), Bodo (`brx`, Devanagari), Hindi (`hi`, reference).
 - **Tasks:** FLORES-IN translation, both directions (chrF); XorQA-IN cross-lingual QA (max token-F1 over gold answers). CrossSum-IN summarization can be switched on in `configs/experiment.yaml`.
-- **Models** (`configs/models.yaml`): Gemma 3 1B/4B-IT, Qwen3 1.7B/4B (thinking disabled), Llama 3.2 1B/3B-Instruct, Sarvam-1 (base model, few-shot only).
+- **Models** (`configs/models.yaml`): Gemma 4 E2B/E4B-IT, Gemma 3 1B/4B-IT, Qwen3 1.7B/4B (thinking disabled), Llama 3.2 1B/3B-Instruct, Sarvam-1 (base model, few-shot only).
 - **Conditions:** `zero_shot`, `few_shot` (3 same-language exemplars from dev/train), `few_shot_hindi` (Hindi exemplars), `translate_test` (QA: question → English via IndicTrans2, answer in English, translate back).
 - **Decoding:** greedy; translation 160 new tokens, QA 32.
 

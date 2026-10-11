@@ -21,7 +21,7 @@ Small open language models (1--4B parameters) are the models that most instituti
 Northeast India can actually run, yet published evaluations of Assamese, Manipuri and Bodo
 mostly cover 8B--70B models and translation alone. Model reports such as Gemma~3 give only
 aggregate Indic scores, and IndicGenBench~\citep{singh2024indicgenbench} evaluated earlier models.
-We evaluate seven recent small open models on translation and cross-lingual question answering
+We evaluate nine recent small open models on translation and cross-lingual question answering
 in these three languages, with Hindi as a high-resource reference, and ask:
 \begin{enumerate}
   \item How far behind Hindi are Assamese, Manipuri and Bodo for small models?
@@ -34,7 +34,7 @@ Contributions: TODO after results.
 \section{Related Work}
 \paragraph{Indic benchmarks.} IndicGenBench~\citep{singh2024indicgenbench}; IndicParam; MILU.
 \paragraph{Northeast Indian MT.} WMT 2023--2025 low-resource Indic MT shared tasks.
-\paragraph{Small models and tokenization.} Gemma~3, Qwen3, Llama~3.2, Sarvam-1; IndicSuperTokenizer~\citep{indicsupertokenizer}.
+\paragraph{Small models and tokenization.} Gemma~3 and~4, Qwen3, Llama~3.2, Sarvam-1; IndicSuperTokenizer~\citep{indicsupertokenizer}.
 % Verify every citation against REFERENCES.md before submission.
 
 \section{Experimental Setup}
@@ -43,7 +43,7 @@ XorQA-IN (questions in X, English context, answers in X) from IndicGenBench, sam
 500 sentences per translation direction and 300 QA items per language with a fixed seed.
 Few-shot exemplars come only from the FLORES dev and XorQA train splits.
 Manipuri in IndicGenBench is written in Bengali script; we report this explicitly.
-\paragraph{Models.} Gemma~3 1B/4B-IT, Qwen3 1.7B/4B (thinking disabled), Llama~3.2 1B/3B-Instruct
+\paragraph{Models.} Gemma~4 E2B/E4B-IT, Gemma~3 1B/4B-IT, Qwen3 1.7B/4B (thinking disabled), Llama~3.2 1B/3B-Instruct
 and the base model Sarvam-1 (2B), at pinned Hugging Face revisions (Table~\ref{tab:models}).
 \paragraph{Conditions.} (i) zero-shot; (ii) 3-shot same-language; (iii) 3-shot with Hindi exemplars;
 (iv) translate-test for QA: the question is translated to English with IndicTrans2, the model answers
