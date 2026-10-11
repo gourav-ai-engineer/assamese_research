@@ -38,9 +38,16 @@ def jobs_for(cfg, model, data_dir):
                        cond, cfg["max_new_tokens"][task])
 
 
-def run_grid(cfg, data_dir, out_dir, model_filter=None, limit=None, translator_backend=None):
+def load_mt_questions(data_dir, eval_file):
+    path = Path(data_dir) / "mt" / eval_file.name
+    if not path.exists():
+        return None
+    with path.open(encoding="utf-8") as f:
+        return {r["id"]: r["mt_question"] for r in map(json.loads, f) if r.get("mt_question")}
+
+
+def run_grid(cfg, data_dir, out_dir, model_filter=None, limit=None):
     out_dir = Path(out_dir)
-    translator = None
     for m in cfg["models"]:
         if model_filter and model_filter not in m["id"]:
             continue
@@ -50,12 +57,15 @@ def run_grid(cfg, data_dir, out_dir, model_filter=None, limit=None, translator_b
         (out_dir / slug).mkdir(parents=True, exist_ok=True)
         (out_dir / slug / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         for eval_file, ex_file, cond, max_new in jobs_for(cfg, m, data_dir):
-            if cond == "translate_test" and translator is None:
-                from .translator import Translator
-                translator = Translator(translator_backend or cfg.get("translator", "indictrans2"))
+            mt_questions = None
+            if cond == "translate_test":
+                mt_questions = load_mt_questions(data_dir, eval_file)
+                if mt_questions is None:
+                    print(f"[{m['id']}] {eval_file.stem} translate_test: skipped (run `mt-questions` first)")
+                    continue
             out = out_dir / slug / f"{eval_file.stem}__{cond}.jsonl"
             n = run_job(llm, eval_file, out, cond, ex_file, k=cfg["k_shot"], limit=limit,
-                        max_new_tokens=max_new, batch_size=cfg.get("batch_size", 8), translator=translator)
+                        max_new_tokens=max_new, batch_size=cfg.get("batch_size", 8), mt_questions=mt_questions)
             print(f"[{m['id']}] {eval_file.stem} {cond}: +{n}")
         del llm
         try:
@@ -85,3 +95,40 @@ def run_mt_baseline(cfg, data_dir, out_dir, backend="indictrans2", limit=None):
                     f.write(json.dumps(dict(r, prediction=p, model_id=f"mt/{backend}", condition="zero_shot"),
                                        ensure_ascii=False) + "\n")
             print(f"[mt/{backend}] {name}: {len(rows)}")
+
+
+def run_mt_questions(cfg, data_dir, backend="indictrans2"):
+    """Translate XorQA questions to English once; cached in data/processed/mt/."""
+    from .schema import read_jsonl
+    from .translator import Translator
+    tr = Translator(backend)
+    for lang in cfg["languages"]:
+        rows = read_jsonl(Path(data_dir) / "eval" / f"qa_{lang}.jsonl")
+        en = tr.translate([r["question"] for r in rows], lang, "en")
+        out = Path(data_dir) / "mt" / f"qa_{lang}.jsonl"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with out.open("w", encoding="utf-8") as f:
+            for r, q in zip(rows, en):
+                f.write(json.dumps({"id": r["id"], "question": r["question"], "mt_question": q,
+                                    "mt_backend": backend}, ensure_ascii=False) + "\n")
+        print(f"[mt/{backend}] qa_{lang}: {len(rows)} questions")
+
+
+def run_back_translate(pred_dir, backend="indictrans2"):
+    """Fill `prediction` for translate_test outputs by translating `prediction_en` back."""
+    from .translator import Translator
+    tr = None
+    for path in sorted(Path(pred_dir).rglob("*__translate_test.jsonl")):
+        with path.open(encoding="utf-8") as f:
+            rows = [json.loads(line) for line in f if line.strip()]
+        todo = [r for r in rows if r.get("prediction") is None]
+        if not todo:
+            continue
+        tr = tr or Translator(backend)
+        back = tr.translate([r["prediction_en"] for r in todo], "en", todo[0]["language"])
+        for r, p in zip(todo, back):
+            r["prediction"], r["mt_backend"] = p, backend
+        with path.open("w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        print(f"[mt/{backend}] {path.parent.name}/{path.name}: {len(todo)} answers")

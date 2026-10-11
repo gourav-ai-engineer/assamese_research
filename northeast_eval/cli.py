@@ -75,6 +75,20 @@ def mt_baseline(backend: str = "indictrans2", limit: int | None = None, data_dir
     run_mt_baseline(load_config(EXP, MODELS), data_dir, out_dir, backend, limit)
 
 
+@app.command("mt-questions")
+def mt_questions(backend: str = "indictrans2", data_dir: str = "data/processed"):
+    """Translate QA questions to English for translate-test (run in the MT environment)."""
+    from .runner import load_config, run_mt_questions
+    run_mt_questions(load_config(EXP, MODELS), data_dir, backend)
+
+
+@app.command("back-translate")
+def back_translate(backend: str = "indictrans2", pred_dir: str = "results/predictions"):
+    """Translate translate-test English answers back (run in the MT environment)."""
+    from .runner import run_back_translate
+    run_back_translate(pred_dir, backend)
+
+
 @app.command()
 def fertility(data_dir: str = "data/processed", output: str = "results/fertility.csv"):
     """Tokens-per-word of every model tokenizer on each language."""

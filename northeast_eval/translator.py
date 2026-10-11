@@ -4,6 +4,10 @@ Backends:
   indictrans2  ai4bharat IndicTrans2 distilled 200M (covers as, mni_Beng, mni_Mtei, brx, hi).
                Needs `pip install IndicTransToolkit` and accepting the model terms on the Hub.
   nllb         facebook/nllb-200-distilled-600M (no Bodo).
+
+IndicTrans2's Hub code imports `transformers.onnx`, removed in transformers 5, while
+Gemma 4 needs transformers >= 5.5. Run the MT commands (mt-questions, back-translate,
+mt-baseline) in a separate environment with transformers < 5, e.g. scripts/setup_mt_env.sh.
 """
 from .languages import LANGUAGES, MNI_MTEI
 

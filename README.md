@@ -10,6 +10,7 @@ Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Lan
 |---|---|---|
 | Data | `northeast-eval prepare` | Downloads IndicGenBench; writes frozen samples to `data/processed/{eval,exemplars}/` |
 | Inference | `northeast-eval run [--model X]` | `results/predictions/<model>/<file>__<condition>.jsonl` (resumable) |
+| Translate-test MT | `mt-questions`, then `back-translate` after `run` | Cached English questions; English answers translated back |
 | MT reference | `northeast-eval mt-baseline` | IndicTrans2 on the same FLORES items |
 | Tokenizers | `northeast-eval fertility` | `results/fertility.csv` (tokens/word per model × language) |
 | Scoring | `northeast-eval score` | `results/scores.csv`: chrF / token-F1, 95% bootstrap CI, wrong-script/empty/copy rates |
@@ -17,7 +18,7 @@ Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Lan
 | Error analysis | `northeast-eval sample-errors` | Blind 50-per-language annotation sheet + separate key |
 | Script study (optional) | `northeast-eval prepare-in22` | Meitei-script Manipuri from IN22-Gen |
 
-`scripts/run_all.sh` runs every stage; `notebooks/colab_run.ipynb` does the same on a free Colab T4, saving to Google Drive.
+IndicTrans2 needs transformers < 5 while Gemma 4 needs ≥ 5.5, so the three MT commands run in a separate environment created by `scripts/setup_mt_env.sh` (`mtenv/bin/python -m northeast_eval.cli <command>`). `scripts/run_all.sh` runs every stage; `notebooks/colab_run.ipynb` does the same on a free Colab T4, saving to Google Drive.
 
 ## Design
 

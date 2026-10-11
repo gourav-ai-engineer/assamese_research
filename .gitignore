@@ -16,3 +16,4 @@ results/*
 *.gguf
 .ipynb_checkpoints/
 *.egg-info/
+mtenv/

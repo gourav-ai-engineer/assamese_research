@@ -86,8 +86,13 @@ def _done_ids(path):
 
 
 def run_job(llm, eval_path, output_path, condition, exemplar_path=None, k=3, limit=None,
-            max_new_tokens=128, batch_size=8, translator=None):
-    """Generate predictions for one eval file × condition; resumes if output exists."""
+            max_new_tokens=128, batch_size=8, mt_questions=None):
+    """Generate predictions for one eval file × condition; resumes if output exists.
+
+    translate_test needs `mt_questions` ({id: English question}) from `mt-questions`; its
+    English answers are stored as `prediction_en` with `prediction: null` until
+    `back-translate` fills them in (MT runs in a separate environment, see translator.py).
+    """
     rows = read_jsonl(eval_path)[:limit] if limit else read_jsonl(eval_path)
     done = _done_ids(output_path)
     rows = [r for r in rows if r["id"] not in done]
@@ -99,7 +104,10 @@ def run_job(llm, eval_path, output_path, condition, exemplar_path=None, k=3, lim
     if condition == "translate_test":
         if rows[0]["task"] != "qa":
             raise ValueError("translate_test is defined for QA only")
-        en_q = translator.translate([r["question"] for r in rows], rows[0]["language"], "en")
+        missing = [r["id"] for r in rows if r["id"] not in (mt_questions or {})]
+        if missing:
+            raise ValueError(f"No machine-translated question for {missing[0]}; run `mt-questions` first")
+        en_q = [mt_questions[r["id"]] for r in rows]
         prompt_rows = [english_qa_row(r, q) for r, q in zip(rows, en_q)]
         for e, q in zip(extra, en_q):
             e["mt_question"] = q
@@ -109,10 +117,9 @@ def run_job(llm, eval_path, output_path, condition, exemplar_path=None, k=3, lim
     gens = llm.generate(prompts, max_new_tokens=max_new_tokens, batch_size=batch_size)
     preds = [clean_output(g["text"], rows[0]["task"]) for g in gens]
     if condition == "translate_test":
-        en_preds = preds
-        preds = translator.translate(en_preds, "en", rows[0]["language"])
-        for e, p in zip(extra, en_preds):
+        for e, p in zip(extra, preds):
             e["prediction_en"] = p
+        preds = [None] * len(preds)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).isoformat()
