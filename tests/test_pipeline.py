@@ -1,6 +1,8 @@
 """End-to-end pipeline test with a fake model and synthetic IndicGenBench-shaped files."""
 import json
 
+import pytest
+
 from northeast_eval import generation
 from northeast_eval.data import prepare
 from northeast_eval.reporting import (
@@ -88,3 +90,17 @@ def test_translate_test_flow(tmp_path, monkeypatch):
     run_back_translate(preds)
     assert all(r["prediction"].startswith("as:") for r in read_jsonl(out))
     assert score_dir(preds, tmp_path / "s.csv", n_resamples=10)[0]["condition"] == "translate_test"
+
+
+def test_langid_trains_and_separates(tmp_path):
+    pytest.importorskip("sklearn")
+    from northeast_eval.langid import evaluate, train
+    bench = tmp_path / "bench"
+    for lang, word in (("as", "অসমীয়া বাক্য"), ("hi", "हिन्दी वाक्य")):
+        for split in ("dev", "test"):
+            path = bench / "flores_in" / f"flores_en_{lang}_{split}.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"examples": [{"source": f"English sentence {i}.", "target": f"{word} {i}"}
+                                                     for i in range(30)]}, ensure_ascii=False), encoding="utf-8")
+    model = train(bench)
+    assert evaluate(model, bench, focus=("as", "hi"))["overall_accuracy"] > 0.9

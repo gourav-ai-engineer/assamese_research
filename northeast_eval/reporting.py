@@ -16,6 +16,7 @@ from .metrics import (
     token_f1,
 )
 from .schema import read_jsonl
+from .script_norm import project
 
 ERROR_TAGS = ["wrong_language_or_script", "missing_information", "hallucinated_content",
               "wrong_word_sense", "grammar_or_inflection", "untranslated_copy", "other"]
@@ -47,7 +48,34 @@ def _rate(flags, key):
     return sum(f[key] for f in flags) / len(flags)
 
 
-def score_rows(rows, n_resamples=1000):
+HINDI_CLUSTER = {"hi", "awa", "bgc", "bho", "hne", "mai", "mup", "mwr", "gbm", "hoj"}
+
+
+def lid_group(pred_lang, target):
+    """Collapse a language-ID label into the categories reported in the paper."""
+    if pred_lang == target:
+        return "on_target"
+    if target == "mni" and pred_lang == "mni_Mtei":
+        return "on_target_meitei_script"
+    if pred_lang in HINDI_CLUSTER:
+        return "hindi_cluster"
+    if pred_lang == "en":
+        return "english_or_latin"
+    if pred_lang in {"bn", "as", "mni", "mni_Mtei", "brx"}:
+        return "other_northeast_or_bengali"
+    return "other_indic"
+
+
+def language_breakdown(lid, preds, target):
+    """Share of outputs per lid_group; empty outputs are counted as their own category."""
+    from collections import Counter
+    texts = [p for p in preds if p.strip()]
+    groups = Counter(lid_group(str(l), target) for l in lid.predict(texts)) if texts else Counter()
+    groups["empty"] = len(preds) - len(texts)
+    return {k: round(v / len(preds), 3) for k, v in groups.most_common() if v}
+
+
+def score_rows(rows, n_resamples=1000, lid=None):
     groups = defaultdict(list)
     for row in rows:
         if isinstance(row.get("prediction"), str) and isinstance(row.get("reference"), str):
@@ -64,12 +92,23 @@ def score_rows(rows, n_resamples=1000):
         else:
             metric, (score, lo, hi) = "chrf", chrf_bootstrap(refs, preds, n_resamples)
         flags = [auto_flags(r) for r in items]
+        target = items[0]["target_lang"]
+        extra = {}
+        if task != "qa":
+            # Script-projected chrF: identical to chrF except for languages with two scripts (mni).
+            extra["chrf_script_projected"] = round(chrf_corpus([project(r, target) for r in refs],
+                                                               [project(p, target) for p in preds]), 2)
+        if lid is not None and task == "translation":
+            breakdown = language_breakdown(lid, preds, target)
+            on = breakdown.get("on_target", 0) + breakdown.get("on_target_meitei_script", 0)
+            extra["off_target_rate"] = round(1 - on - breakdown.get("empty", 0), 3)
+            extra["language_breakdown"] = json.dumps(breakdown)
         out.append({"model_id": model, "task": task, "language": lang, "direction": direction,
                     "condition": condition, "metric": metric, "score": round(score, 2),
                     "ci_low": round(lo, 2), "ci_high": round(hi, 2), "n": len(items),
                     "chrfpp": round(chrf_corpus(refs, preds, plus=True), 2) if task != "qa" else "",
                     "empty_rate": round(_rate(flags, "empty"), 3), "wrong_script_rate": round(_rate(flags, "wrong_script"), 3),
-                    "source_copy_rate": round(_rate(flags, "source_copy"), 3), "overlong_rate": round(_rate(flags, "overlong"), 3)})
+                    "source_copy_rate": round(_rate(flags, "source_copy"), 3), "overlong_rate": round(_rate(flags, "overlong"), 3), **extra})
     return out
 
 
@@ -79,8 +118,9 @@ def write_csv(path, rows):
     if not rows:
         path.write_text("", encoding="utf-8")
         return
+    fields = list(dict.fromkeys(k for r in rows for k in r))  # rows may carry different extras
     with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w = csv.DictWriter(f, fieldnames=fields, restval="")
         w.writeheader()
         w.writerows(rows)
 
@@ -90,9 +130,9 @@ def read_csv(path):
         return list(csv.DictReader(f))
 
 
-def score_dir(pred_dir, output_csv, n_resamples=1000):
+def score_dir(pred_dir, output_csv, n_resamples=1000, lid=None):
     rows = [r for p in _iter_prediction_files(pred_dir) for r in read_jsonl(p)]
-    scores = score_rows(rows, n_resamples)
+    scores = score_rows(rows, n_resamples, lid)
     write_csv(output_csv, scores)
     return scores
 
@@ -146,7 +186,25 @@ def write_tables(scores, out_dir):
         for cond in sorted({s["condition"] for s in scores if s["task"] == task}):
             md += [f"## {task} — {cond}\n", pivot_table(scores, task, cond), ""]
             (out_dir / f"{task}_{cond}.tex").write_text(pivot_table(scores, task, cond, "latex"), encoding="utf-8")
+    diag = diagnostics_table(scores)
+    if diag:
+        md += ["## Diagnostics: script penalty and language confusion (en→xx, zero-shot)\n", diag, ""]
     (out_dir / "tables.md").write_text("\n".join(md), encoding="utf-8")
+
+
+def diagnostics_table(scores, condition="zero_shot"):
+    """chrF vs script-projected chrF and off-target rate for translation into each language."""
+    sel = [s for s in scores if s["task"] == "translation" and s["condition"] == condition
+           and s["direction"].startswith("en->") and s.get("chrf_script_projected", "") != ""]
+    if not sel:
+        return ""
+    lines = ["| Model | Direction | chrF | chrF (script-projected) | Script penalty | Off-target | Breakdown |",
+             "|---|---|---|---|---|---|---|"]
+    for s in sorted(sel, key=lambda x: (x["direction"], x["model_id"])):
+        raw, proj = float(s["score"]), float(s["chrf_script_projected"])
+        lines.append(f"| {short_name(s['model_id'])} | {s['direction']} | {raw:.1f} | {proj:.1f} | "
+                     f"{proj - raw:+.1f} | {s.get('off_target_rate', '–')} | {s.get('language_breakdown', '')} |")
+    return "\n".join(lines)
 
 
 def make_plots(scores, out_dir, fertility_csv=None):

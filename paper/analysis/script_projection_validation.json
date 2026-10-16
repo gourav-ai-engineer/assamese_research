@@ -1,0 +1,64 @@
+{
+  "n_sentences": 500,
+  "spearman_raw_vs_projected": 1.0,
+  "pearson_raw_vs_projected": 0.9998475196568433,
+  "max_abs_gap_meitei_vs_bengali_projected": 0.22272877376785516,
+  "rows": [
+    {
+      "edit_rate": 0.0,
+      "raw_chrf_bengali_output": 100.0,
+      "raw_chrf_meitei_output": 0.859162657856399,
+      "projected_chrf_bengali_output": 100.0,
+      "projected_chrf_meitei_output": 99.77727122623214
+    },
+    {
+      "edit_rate": 0.05,
+      "raw_chrf_bengali_output": 85.25570789819457,
+      "raw_chrf_meitei_output": 0.8574829021825547,
+      "projected_chrf_bengali_output": 84.86274879027923,
+      "projected_chrf_meitei_output": 84.67356982405751
+    },
+    {
+      "edit_rate": 0.1,
+      "raw_chrf_bengali_output": 71.89692882487576,
+      "raw_chrf_meitei_output": 0.8562531776267926,
+      "projected_chrf_bengali_output": 71.2943703562998,
+      "projected_chrf_meitei_output": 71.13500922181245
+    },
+    {
+      "edit_rate": 0.15,
+      "raw_chrf_bengali_output": 60.91262461318296,
+      "raw_chrf_meitei_output": 0.8547607142854623,
+      "projected_chrf_bengali_output": 60.31496494959728,
+      "projected_chrf_meitei_output": 60.20885709849904
+    },
+    {
+      "edit_rate": 0.2,
+      "raw_chrf_bengali_output": 51.73090058175146,
+      "raw_chrf_meitei_output": 0.8524241827698713,
+      "projected_chrf_bengali_output": 51.19691230302805,
+      "projected_chrf_meitei_output": 51.13071629350727
+    },
+    {
+      "edit_rate": 0.3,
+      "raw_chrf_bengali_output": 37.7620789320632,
+      "raw_chrf_meitei_output": 0.8505239319368896,
+      "projected_chrf_bengali_output": 37.69737806224777,
+      "projected_chrf_meitei_output": 37.65692873872922
+    },
+    {
+      "edit_rate": 0.4,
+      "raw_chrf_bengali_output": 28.416438013533384,
+      "raw_chrf_meitei_output": 0.8487445096433757,
+      "projected_chrf_bengali_output": 28.887695588537643,
+      "projected_chrf_meitei_output": 28.85588687230997
+    },
+    {
+      "edit_rate": 0.5,
+      "raw_chrf_bengali_output": 21.506599358288717,
+      "raw_chrf_meitei_output": 0.8505607444543941,
+      "projected_chrf_bengali_output": 22.591205431556876,
+      "projected_chrf_meitei_output": 22.577653367538332
+    }
+  ]
+}

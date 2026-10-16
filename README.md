@@ -14,6 +14,7 @@ Evaluation-only study: **How Well Do Small Open LLMs Handle Northeast Indian Lan
 | MT reference | `northeast-eval mt-baseline` | IndicTrans2 on the same FLORES items |
 | Tokenizers | `northeast-eval fertility` | `results/fertility.csv` (tokens/word per model × language) |
 | Scoring | `northeast-eval score` | `results/scores.csv`: chrF / token-F1, 95% bootstrap CI, wrong-script/empty/copy rates |
+| Diagnostics | `northeast-eval train-langid`, then `score --langid results/langid/langid.pkl` | Language-confusion breakdown and script-projected chrF per system |
 | Report | `northeast-eval report` | `results/tables/*.md,*.tex`, `results/figures/*.pdf,png` |
 | Error analysis | `northeast-eval sample-errors` | Blind 50-per-language annotation sheet + separate key |
 | Script study (optional) | `northeast-eval prepare-in22` | Meitei-script Manipuri from IN22-Gen |
@@ -27,6 +28,15 @@ IndicTrans2 needs transformers < 5 while Gemma 4 needs ≥ 5.5, so the three MT 
 - **Models** (`configs/models.yaml`): Gemma 4 E2B/E4B-IT, Gemma 3 1B/4B-IT, Qwen3 1.7B/4B (thinking disabled), Llama 3.2 1B/3B-Instruct, Sarvam-1 (base model, few-shot only).
 - **Conditions:** `zero_shot`, `few_shot` (3 same-language exemplars from dev/train), `few_shot_hindi` (Hindi exemplars), `translate_test` (QA: question → English via IndicTrans2, answer in English, translate back).
 - **Decoding:** greedy; translation 160 new tokens, QA 32.
+
+## Diagnostics (paper Section "Diagnosing Script and Language Errors")
+
+- **Script-projected chrF** (`northeast_eval/script_norm.py`): Manipuri hypothesis and reference are both transliterated to Meitei Mayek before chrF, so a correct Meitei-script output is not scored ~0 against IndicGenBench's Bengali-script references.
+- **Language identification** (`northeast_eval/langid.py`): char 1–4-gram SVM over 31 labels trained on FLORES-IN dev; 99.2% held-out accuracy. Adds `off_target_rate` and `language_breakdown` to `scores.csv`.
+- Reproducible analyses on benchmark data only (no GPU), outputs in `paper/analysis/`:
+  - `scripts/audit_reference_scripts.py` — script of every IndicGenBench reference.
+  - `scripts/validate_script_projection.py` — controlled validation of script-projected chrF.
+  - `scripts/wrong_language_baseline.py` — confusion floors (chrF of a perfect wrong-language translation).
 
 ## Quick start
 

@@ -99,17 +99,28 @@ def fertility(data_dir: str = "data/processed", output: str = "results/fertility
     print(f"Wrote {len(rows)} rows to {output}")
 
 
+@app.command("train-langid")
+def train_langid(raw_dir: str = "data/raw/indic-gen-bench", out_dir: str = "results/langid"):
+    """Train the 31-label language identifier on FLORES-IN dev; report held-out test accuracy."""
+    from .langid import main
+    r = main(raw_dir, out_dir)
+    print(f"Held-out accuracy {r['overall_accuracy']:.4f} on {r['n']} sentences, {r['languages']} labels")
+    for lang, v in r["per_language"].items():
+        print(f"  {lang}: {v['accuracy']:.4f} {v['top_confusions']}")
+
+
 @app.command()
 def score(predictions: str = typer.Option(None, "--predictions", help="Single JSONL file"),
           pred_dir: str = "results/predictions", output: str = typer.Option(None, "--output"),
-          resamples: int = 1000):
+          resamples: int = 1000, langid: str = typer.Option(None, help="Path to langid.pkl")):
     """Score one file (JSON) or a whole predictions directory (CSV)."""
     from .reporting import score_dir, score_file
     if predictions:
         r = score_file(predictions, output or "results/metrics.json")
         print(f"Wrote {len(r['aggregates'])} aggregate rows to {output}")
     else:
-        rows = score_dir(pred_dir, output or "results/scores.csv", resamples)
+        from .langid import load
+        rows = score_dir(pred_dir, output or "results/scores.csv", resamples, load(langid) if langid else None)
         print(f"Wrote {len(rows)} score rows to {output or 'results/scores.csv'}")
 
 

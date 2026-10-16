@@ -1,0 +1,124 @@
+{
+  "as/flores_in": {
+    "items": 2009,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 0.9968,
+      "Latin": 0.0031,
+      "Other": 0.0001
+    }
+  },
+  "as/xorqa_in": {
+    "items": 926,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 1.0
+    }
+  },
+  "as/crosssum_in": {
+    "items": 700,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 0.9925,
+      "Latin": 0.0075
+    }
+  },
+  "mni/flores_in": {
+    "items": 2009,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 0.996,
+      "Latin": 0.004
+    }
+  },
+  "mni/xorqa_in": {
+    "items": 980,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 0.9998,
+      "Latin": 0.0002
+    }
+  },
+  "mni/crosssum_in": {
+    "items": 697,
+    "majority_script_share": {
+      "Bengali": 1.0
+    },
+    "mean_letter_share": {
+      "Bengali": 0.9997,
+      "Latin": 0.0003
+    }
+  },
+  "brx/flores_in": {
+    "items": 2009,
+    "majority_script_share": {
+      "Devanagari": 1.0
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9977,
+      "Latin": 0.0023
+    }
+  },
+  "brx/xorqa_in": {
+    "items": 925,
+    "majority_script_share": {
+      "Devanagari": 0.9827,
+      "Latin": 0.0173
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9789,
+      "Latin": 0.0211
+    }
+  },
+  "brx/crosssum_in": {
+    "items": 700,
+    "majority_script_share": {
+      "Devanagari": 1.0
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9994,
+      "Latin": 0.0006
+    }
+  },
+  "hi/flores_in": {
+    "items": 2009,
+    "majority_script_share": {
+      "Devanagari": 1.0
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9975,
+      "Latin": 0.0025
+    }
+  },
+  "hi/xorqa_in": {
+    "items": 926,
+    "majority_script_share": {
+      "Devanagari": 0.9989,
+      "Latin": 0.0011
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9989,
+      "Latin": 0.0011
+    }
+  },
+  "hi/crosssum_in": {
+    "items": 1044,
+    "majority_script_share": {
+      "Devanagari": 1.0
+    },
+    "mean_letter_share": {
+      "Devanagari": 0.9997,
+      "Latin": 0.0003
+    }
+  }
+}

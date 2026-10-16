@@ -1,0 +1,95 @@
+[
+  {
+    "target": "as",
+    "wrong_language_output": "bn",
+    "aligned_sentences": 1012,
+    "chrf": 21.89
+  },
+  {
+    "target": "as",
+    "wrong_language_output": "or",
+    "aligned_sentences": 1012,
+    "chrf": 0.59
+  },
+  {
+    "target": "as",
+    "wrong_language_output": "mni",
+    "aligned_sentences": 1012,
+    "chrf": 13.0
+  },
+  {
+    "target": "as",
+    "wrong_language_output": "hi",
+    "aligned_sentences": 1012,
+    "chrf": 0.45
+  },
+  {
+    "target": "brx",
+    "wrong_language_output": "hi",
+    "aligned_sentences": 1012,
+    "chrf": 13.13
+  },
+  {
+    "target": "brx",
+    "wrong_language_output": "ne",
+    "aligned_sentences": 1012,
+    "chrf": 14.37
+  },
+  {
+    "target": "brx",
+    "wrong_language_output": "mr",
+    "aligned_sentences": 1012,
+    "chrf": 12.84
+  },
+  {
+    "target": "brx",
+    "wrong_language_output": "mai",
+    "aligned_sentences": 1012,
+    "chrf": 12.96
+  },
+  {
+    "target": "mni",
+    "wrong_language_output": "as",
+    "aligned_sentences": 1012,
+    "chrf": 12.27,
+    "chrf_script_projected": 13.97
+  },
+  {
+    "target": "mni",
+    "wrong_language_output": "bn",
+    "aligned_sentences": 1012,
+    "chrf": 14.44,
+    "chrf_script_projected": 16.28
+  },
+  {
+    "target": "mni",
+    "wrong_language_output": "hi",
+    "aligned_sentences": 1012,
+    "chrf": 0.61,
+    "chrf_script_projected": 0.62
+  },
+  {
+    "target": "hi",
+    "wrong_language_output": "mai",
+    "aligned_sentences": 1012,
+    "chrf": 37.52
+  },
+  {
+    "target": "hi",
+    "wrong_language_output": "bho",
+    "aligned_sentences": 1012,
+    "chrf": 34.65
+  },
+  {
+    "target": "hi",
+    "wrong_language_output": "mr",
+    "aligned_sentences": 1012,
+    "chrf": 23.5
+  },
+  {
+    "target": "hi",
+    "wrong_language_output": "ne",
+    "aligned_sentences": 1012,
+    "chrf": 26.83
+  }
+]

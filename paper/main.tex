@@ -27,13 +27,31 @@ in these three languages, with Hindi as a high-resource reference, and ask:
   \item How far behind Hindi are Assamese, Manipuri and Bodo for small models?
   \item Does an Indic-specialised small model (Sarvam-1) beat general multilingual ones on languages it was not trained on?
   \item Do few-shot demonstrations---in the same language or in Hindi---help, and does translate-test beat direct prompting?
-  \item How much of the gap is explained by tokenizer fertility and by wrong-script generation?
+  \item How much of the measured gap reflects translation ability, and how much reflects writing in
+        the wrong script or the wrong language---which standard chrF cannot tell apart?
 \end{enumerate}
-Contributions: TODO after results.
+\paragraph{Contributions.}
+(1) The first per-language evaluation of 2025--26 small open models (Gemma~3/4, Qwen3, Llama~3.2,
+Sarvam-1) on Assamese, Manipuri and Bodo generation.
+(2) \emph{Script-projected chrF}, a scoring variant that maps hypothesis and reference into Meitei
+Mayek before scoring, so Manipuri outputs are not penalised for script choice; we show it preserves
+the ranking of raw chrF (Pearson $r=0.9998$) while removing a script penalty of up to 99 points.
+(3) A \emph{language-confusion} diagnostic: a character n-gram identifier over 31 labels (99.2\%
+held-out accuracy) that reports how often outputs are in Hindi, Bengali, English or Meitei script
+instead of the target language, together with \emph{confusion floors}---the chrF a perfect
+translation in the wrong language receives (up to 21.9 for Bengali scored as Assamese).
+(4) A reference audit showing that all 3{,}686 Manipuri items in IndicGenBench are in Bengali
+script, although the benchmark documentation lists Meitei Mayek.
+Code, prompts and predictions are released.
 
 \section{Related Work}
 \paragraph{Indic benchmarks.} IndicGenBench~\citep{singh2024indicgenbench}; IndicParam; MILU.
-\paragraph{Northeast Indian MT.} WMT 2023--2025 low-resource Indic MT shared tasks.
+\paragraph{Northeast Indian MT.} WMT 2023--2025 low-resource Indic MT shared tasks. Prior work reports
+large chrF gaps between Bengali-script and Meitei-script Manipuri for the same system, but does not
+separate script choice from translation quality when scoring LLM outputs.
+\paragraph{Language confusion.} \citet{marchisio2024confusion} show that LLMs often answer in an
+unintended language, mostly English, across 15 languages; no Northeast Indian language is covered,
+and related-language confusion (Bodo$\rightarrow$Hindi, Assamese$\rightarrow$Bengali) is not measured.
 \paragraph{Small models and tokenization.} Gemma~3 and~4, Qwen3, Llama~3.2, Sarvam-1; IndicSuperTokenizer~\citep{indicsupertokenizer}.
 % Verify every citation against REFERENCES.md before submission.
 
@@ -54,6 +72,76 @@ confidence intervals; maximum token-F1 over gold answers for QA. We also report 
 in the wrong script, empty outputs and untranslated copies, and tokenizer fertility (tokens per word).
 As a reference line we score IndicTrans2 on the same FLORES items.
 
+\section{Diagnosing Script and Language Errors}
+\label{sec:diagnostics}
+\paragraph{Reference audit.} Measuring the dominant script of every reference item, all 3{,}686
+Manipuri items across FLORES-IN (2{,}009), XorQA-IN (980) and CrossSum-IN (697) are in Bengali
+script, while the IndicGenBench documentation lists the script as Meitei. Assamese is 100\% Bengali
+script and Bodo 98--100\% Devanagari (Table~\ref{tab:audit}). A model that writes Manipuri in its
+official script, Meitei Mayek, is therefore scored against a reference in a different script.
+
+\paragraph{Script-projected chrF.} Bengali$\rightarrow$Meitei transliteration is many-to-one
+(e.g.\ \textit{i}/\textit{ii} vowel signs and three sibilants collapse), hence deterministic. We
+transliterate both hypothesis and reference into Meitei Mayek with Aksharamukha~\citep{aksharamukha}
+before computing chrF; text already in Meitei Mayek is unchanged, so neither script is favoured.
+To validate it, we corrupt the 500 Manipuri FLORES-IN test references at character-edit rates from
+0 to 50\% and score each corrupted set written in Bengali script and in Meitei Mayek
+(Table~\ref{tab:projection}). Raw chrF gives a \emph{perfect} Meitei-script output 0.86, against 100
+for the same text in Bengali script. Projected chrF scores both versions within 0.22 points of each
+other at every noise level and tracks raw same-script chrF almost exactly (Pearson $r=0.9998$,
+Spearman $\rho=1.0$), so it removes the script penalty without changing model rankings.
+
+\paragraph{Language identification.} We train a linear SVM on character 1--4-grams over the
+FLORES-IN dev split of all 29 IndicGenBench languages, English, and Meitei-script Manipuri
+(transliterated), and evaluate on the FLORES-IN test split. Held-out accuracy is 99.2\% over
+31{,}520 sentences and 100\% for Assamese, Manipuri (both scripts), Bodo, Bengali and English;
+remaining errors are among closely related Hindi-belt varieties, which we therefore report as
+one \emph{Hindi cluster}. For each system we report the off-target rate: the share of non-empty
+translations identified as a language other than the target (Meitei-script Manipuri counts as
+on-target).
+
+\paragraph{Confusion floors.} Because FLORES sentences are parallel across languages, we can score
+the human reference of a related language as if it were a system output. A perfect Bengali
+translation scored against Assamese references receives chrF 21.9; Hindi, Nepali, Marathi and
+Maithili scored against Bodo receive 12.8--14.4; Bengali and Assamese against Manipuri receive
+14.4 and 12.3 (Table~\ref{tab:floors}). System scores near these floors cannot be read as
+target-language ability without the off-target rate.
+
+\begin{table}[t]\centering\small
+\begin{tabular}{lrrr}\toprule
+Language & FLORES-IN & XorQA-IN & CrossSum-IN \\\midrule
+Assamese & 100\% Bengali & 100\% Bengali & 100\% Bengali \\
+Manipuri & 100\% Bengali & 100\% Bengali & 100\% Bengali \\
+Bodo & 100\% Devanagari & 98.3\% Devanagari & 100\% Devanagari \\\bottomrule
+\end{tabular}
+\caption{Dominant script of IndicGenBench references (share of items, all splits).}\label{tab:audit}
+\end{table}
+
+\begin{table}[t]\centering\small
+\begin{tabular}{rrrrr}\toprule
+& \multicolumn{2}{c}{Raw chrF} & \multicolumn{2}{c}{Projected chrF} \\
+Edit rate & Bengali out & Meitei out & Bengali out & Meitei out \\\midrule
+0.00 & 100.00 & 0.86 & 100.00 & 99.78 \\
+0.10 & 71.90 & 0.86 & 71.29 & 71.14 \\
+0.20 & 51.73 & 0.85 & 51.20 & 51.13 \\
+0.30 & 37.76 & 0.85 & 37.70 & 37.66 \\
+0.50 & 21.51 & 0.85 & 22.59 & 22.58 \\\bottomrule
+\end{tabular}
+\caption{Controlled validation of script-projected chrF on 500 Manipuri FLORES-IN references.}\label{tab:projection}
+\end{table}
+
+\begin{table}[t]\centering\small
+\begin{tabular}{llr}\toprule
+Target & Wrong-language output & chrF \\\midrule
+Assamese & Bengali & 21.9 \\
+Assamese & Manipuri (Bengali script) & 13.0 \\
+Bodo & Nepali / Hindi / Maithili / Marathi & 14.4 / 13.1 / 13.0 / 12.8 \\
+Manipuri & Bengali / Assamese & 14.4 / 12.3 \\
+Hindi & Maithili / Bhojpuri & 37.5 / 34.7 \\\bottomrule
+\end{tabular}
+\caption{Confusion floors: chrF of a perfect translation in the wrong language (FLORES-IN test, 1{,}012 aligned sentences).}\label{tab:floors}
+\end{table}
+
 \section{Results}
 \subsection{Translation}
 % \input{../results/tables/translation_zero_shot.tex}
@@ -66,7 +154,9 @@ TODO: deltas few-shot vs zero-shot, Hindi exemplars, translate-test.
 
 \section{Analysis}
 \paragraph{Tokenizer fertility.} TODO: Figure~\ref{fig:fert}; Spearman correlation (descriptive only).
-\paragraph{Script.} TODO: wrong-script rates; Manipuri Bengali vs Meitei script (IN22 subset, if run).
+\paragraph{Script and language confusion.} TODO: raw vs script-projected chrF per model for
+English$\rightarrow$Manipuri; off-target rates and their breakdown (Hindi cluster, Bengali, English,
+Meitei script) per model and language, read against the confusion floors in Table~\ref{tab:floors}.
 \paragraph{Error taxonomy.} TODO: 50 blind-sampled outputs per language annotated with
 wrong language/script, missing information, hallucination, wrong word sense, grammar/inflection.
 
