@@ -5,6 +5,15 @@ app = typer.Typer(help="Small LLM evaluation for Northeast Indian languages", no
 EXP, MODELS = "configs/experiment.yaml", "configs/models.yaml"
 
 
+def _config(config=EXP, models=MODELS, languages=None):
+    """Load the grid; `languages` ("as,hi") restricts it so one run fits a short time budget."""
+    from .runner import load_config
+    cfg = load_config(config, models)
+    if languages:
+        cfg["languages"] = [x.strip() for x in languages.split(",") if x.strip()]
+    return cfg
+
+
 @app.command()
 def prepare(raw_dir: str = "data/raw/indic-gen-bench", out_dir: str = "data/processed",
             config: str = EXP, download: bool = True):
@@ -50,10 +59,10 @@ def validate(input: str = typer.Option(..., "--input"), require_reference: bool 
 @app.command()
 def run(model: str | None = typer.Option(None, help="Substring filter on model id"), limit: int | None = None,
         data_dir: str = "data/processed", out_dir: str = "results/predictions", config: str = EXP,
-        models: str = MODELS):
+        models: str = MODELS, languages: str | None = typer.Option(None, help="e.g. as,hi")):
     """Run the full grid (resumable) for all or one model."""
-    from .runner import load_config, run_grid
-    run_grid(load_config(config, models), data_dir, out_dir, model, limit)
+    from .runner import run_grid
+    run_grid(_config(config, models, languages), data_dir, out_dir, model, limit)
 
 
 @app.command()
@@ -76,10 +85,11 @@ def mt_baseline(backend: str = "indictrans2", limit: int | None = None, data_dir
 
 
 @app.command("mt-questions")
-def mt_questions(backend: str = "indictrans2", data_dir: str = "data/processed"):
+def mt_questions(backend: str = "indictrans2", data_dir: str = "data/processed",
+                 languages: str | None = typer.Option(None, help="e.g. as,hi")):
     """Translate QA questions to English for translate-test (run in the MT environment)."""
     from .runner import load_config, run_mt_questions
-    run_mt_questions(load_config(EXP, MODELS), data_dir, backend)
+    run_mt_questions(_config(languages=languages), data_dir, backend)
 
 
 @app.command("back-translate")
